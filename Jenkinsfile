@@ -44,6 +44,7 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 script {
+		    sh "docker images"
                     // Login to AWS ECR
                     sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}"
                     sh "docker push ${ECR_REPO}:${IMAGE_TAG}"
