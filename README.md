@@ -1,5 +1,7 @@
 # Calculator App (Example for CI/CD Exam)
 
+new change
+
 Pure-Python calculator logic + small stateful CalculatorApp + healthcheck API.
 
 ## Run unit/integration tests
