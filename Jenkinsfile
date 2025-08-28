@@ -7,7 +7,7 @@ pipeline {
         ECR_REPO = "${REGISTRY}/${IMAGE_NAME}"
         AWS_REGION = 'us-east-1'
         IMAGE_TAG = 'latest' // for CD --> overridden for PR
-        EC2-PUBLIC-IP = '184.73.135.135' 
+        EC2_PUBLIC_IP = '184.73.135.135' 
 
     }
     //CI stages
@@ -59,7 +59,7 @@ pipeline {
                     def sshKeyPath = "/root/.ssh/annaj2.pem"
                     // SSH into EC2 to pull and run the latest image
                     sh """
-                    ssh -i ${sshKeyPath} -o StrictHostKeyChecking=no ubuntu@${EC2-PUBLIC-IP} 'docker pull ${ECR_REPO}:${IMAGE_TAG} && docker run -d -p 5000:5000 ${ECR_REPO}:${IMAGE_TAG}'
+                    ssh -i ${sshKeyPath} -o StrictHostKeyChecking=no ubuntu@${EC2_PUBLIC_IP} 'docker pull ${ECR_REPO}:${IMAGE_TAG} && docker run -d -p 5000:5000 ${ECR_REPO}:${IMAGE_TAG}'
                     """
                 }
             }
@@ -70,7 +70,7 @@ pipeline {
             when {branch 'master'}
             steps {
                 script {
-                    def healthCheckResponse = sh(script: "curl -fsS http://${EC2-PUBLIC-IP}:5000/health", returnStatus: true)
+                    def healthCheckResponse = sh(script: "curl -fsS http://${EC2_PUBLIC_IP}:5000/health", returnStatus: true)
                     if (healthCheckResponse != 0) {
                         error "Health check failed!"
                     }
