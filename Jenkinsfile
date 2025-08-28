@@ -35,8 +35,8 @@ pipeline {
             when {branch 'master'}
             steps {
                 sh "docker build -t ${ECR_REPO}:${IMAGE_TAG} ."
-                sh "docker run --rm ${ECR_REPO}:${IMAGE_TAG} pytest -q tests/test_calculator_logic.py"
-                sh "docker run --rm ${ECR_REPO}:${IMAGE_TAG} pytest -q tests/test_calculator_app_integration.py"
+                sh "docker run --rm -e PYTHONPATH=/app ${ECR_REPO}:${IMAGE_TAG} pytest -q tests/test_calculator_logic.py"
+                sh "docker run --rm -e PYTHONPATH=/app ${ECR_REPO}:${IMAGE_TAG} pytest -q tests/test_calculator_app_integration.py"
             }
         }
         
