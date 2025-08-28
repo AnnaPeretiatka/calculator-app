@@ -21,7 +21,8 @@ pipeline {
             when {branch 'PR-*'}
             steps{
                 script{
-                    IMAGE_TAG = "pr-${env.CHANGE_ID}-${BUILD_NUMBER}" // PR specific tag
+                    def imageTag = "pr-${env.CHANGE_ID}-${BUILD_NUMBER}" // PR specific tag
+		    env.IMAGE_TAG = imageTag
                 }
                 sh "docker build -t ${ECR_REPO}:${IMAGE_TAG} ."
                 sh "docker run --rm -e PYTHONPATH=/app ${ECR_REPO}:${IMAGE_TAG} pytest -q tests/test_calculator_logic.py"
