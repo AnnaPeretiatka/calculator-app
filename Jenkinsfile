@@ -12,7 +12,7 @@ pipeline {
     }
     stages{
         stage('Checkout'){
-			agent { docker { image 'alpine/git' } } //checkout inside lightweight git container
+			agent any
             steps{
                 checkout scm //clone repo to Jenkins workspace
 				script {
@@ -94,6 +94,7 @@ pipeline {
 }
 
         
+
 
 
 
