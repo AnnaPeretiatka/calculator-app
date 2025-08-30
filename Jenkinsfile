@@ -47,7 +47,7 @@ pipeline {
             agent {
                 docker {
                     image 'docker:24-dind'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -e IMAGE_TAG=${env.IMAGE_TAG}'
                     reuseNode true
                 }
             }
@@ -63,8 +63,8 @@ pipeline {
                 sh """docker build --target test -t ${IMAGE_NAME}:${env.IMAGE_TAG}-test ."""
                 sh """docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${env.IMAGE_TAG}-test"""
                 // Build prod image inside DinD
-                sh """docker build --target prod -t ${ECR_REPO}:${env.IMAGE_TAG} ."""
-		echo "Built PR image: ${ECR_REPO}:${env.IMAGE_TAG}"
+                sh """docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} ."""
+		echo "Built PR image: ${ECR_REPO}:${IMAGE_TAG}"
             }
         }
 
@@ -87,7 +87,7 @@ pipeline {
             agent {
                 docker {
                     image 'docker:24-dind'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -e IMAGE_TAG=${env.IMAGE_TAG}'
                     reuseNode true
                 }
             }
@@ -98,7 +98,7 @@ pipeline {
                 sh """docker build --target test -t ${IMAGE_NAME}:${env.IMAGE_TAG}-test ."""
                 sh """docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${env.IMAGE_TAG}-test"""
                 // Build prod image inside DinD
-                sh """docker build --target prod -t ${ECR_REPO}:${env.IMAGE_TAG} ."""
+                sh """docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} ."""i
             }
         }
 
