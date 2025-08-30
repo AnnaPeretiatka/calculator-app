@@ -34,8 +34,7 @@ pipeline {
             when { changeRequest() }
             agent {
                 docker {
-                    //image 'docker:24-dind'
-		    image 'amazon/aws-cli:2.15.0'
+                    image 'docker:24-dind'
                     args '-v /var/run/docker.sock:/var/run/docker.sock'
                     reuseNode true
                 }
@@ -47,11 +46,27 @@ pipeline {
                 sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
                 // Build prod image inside DinD
                 sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
-		// Push PR image to ECR**
-		sh """
-            		aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
-            		docker push ${ECR_REPO}:${IMAGE_TAG}
-        	"""
+            }
+        }
+
+	
+        stage('Push PR Image to ECR') {
+            when { changeRequest() }
+            agent {
+                docker {
+                    image 'docker:24-dind'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                    reuseNode true
+                }
+            }
+            steps {
+                script {
+		    sh """
+		        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
+			docker push ${ECR_REPO}:${IMAGE_TAG}
+		    """
+		script { echo "PR image pushed: ${ECR_REPO}:${IMAGE_TAG}" }
+		}
             }
         }
 
