@@ -14,7 +14,6 @@ pipeline {
 
     }
     stages{
-		deleteDir()
         stage('Checkout'){
 			steps {
                 checkout([$class: 'GitSCM',
@@ -102,6 +101,7 @@ pipeline {
 }
 
         
+
 
 
 
