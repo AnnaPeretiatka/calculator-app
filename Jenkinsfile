@@ -32,6 +32,7 @@ pipeline {
 		        docker {
 		            image 'docker:24-dind'
 		            args '-v /var/run/docker.sock:/var/run/docker.sock'
+					reuseNode true
 		        }
 		    }
             steps {
@@ -52,10 +53,11 @@ pipeline {
 		        docker {
 		            image 'docker:24-dind'
 		            args '-v /var/run/docker.sock:/var/run/docker.sock'
+					reuseNode true
 		        }
 		    }
             steps {
-				script { env.IMAGE_TAG = "candidate-${env.SHORT_COMMIT}" } // candidate tag
+				script { env.IMAGE_TAG = "candidate-${env.SHORT_COMMIT ?: env.BUILD_NUMBER}" } // candidate tag
 				// build & run test
                 sh 'docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test .'
 		        sh 'docker run --rm ${IMAGE_NAME}:${IMAGE_TAG}-test'
@@ -97,6 +99,7 @@ pipeline {
 }
 
         
+
 
 
 
