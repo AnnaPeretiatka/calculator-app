@@ -21,6 +21,14 @@ pipeline {
 				}
             }
         }
+
+		stage('Debug Git') {
+		    steps {
+		        sh 'pwd'
+		        sh 'ls -la'
+		        sh 'git rev-parse --is-inside-work-tree || echo "Not in a git dir"'
+		    }
+		}
 		
         stage('CI: build | test (PR) | push to ecr'){
             when {changeRequest()} // only for PR builds
@@ -94,6 +102,7 @@ pipeline {
 }
 
         
+
 
 
 
