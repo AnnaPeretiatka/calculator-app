@@ -14,6 +14,11 @@ pipeline {
 
     }
     stages{
+		stage('Cleanup') {
+		    steps {
+		        deleteDir()  // this wipes the workspace
+		    }
+		}
         stage('Checkout'){
 			steps {
                 checkout([$class: 'GitSCM',
@@ -101,6 +106,7 @@ pipeline {
 }
 
         
+
 
 
 
