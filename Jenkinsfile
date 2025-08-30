@@ -31,7 +31,7 @@ pipeline {
         }
 
         stage('CI: Build, Test, Push (PR)') {
-            //when { changeRequest() }
+            when { changeRequest() }
             agent {
                 docker {
                     image 'docker:24-dind'
@@ -44,9 +44,21 @@ pipeline {
                 // Build test image
                 sh 'docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test .'
                 sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
-                
                 // Build prod image inside DinD
                 sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
+            }
+        }
+
+	
+        stage('Push PR Image to ECR') {
+            when { changeRequest() }
+            steps {
+                script {
+		    sh """
+		        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
+			docker push ${ECR_REPO}:${IMAGE_TAG}
+		    """
+		}
             }
         }
 
@@ -65,7 +77,6 @@ pipeline {
                 // Build & test
                 sh 'docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test .'
                 sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
-
                 // Build prod image inside DinD
                 sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
             }
@@ -85,7 +96,6 @@ pipeline {
                 }
 
                 // Deploy to production EC2 using SSH
-                // Deploy using sshagent instead of -i
                 script {
                     sh """
                         ssh -i ~/.ssh/anna_key_home.pem -o StrictHostKeyChecking=no ubuntu@${PROD_IP} \\
