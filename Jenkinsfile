@@ -53,10 +53,12 @@ pipeline {
 				sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
 				
 				// login and push both candidate + latest
-        		sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}'
-        		docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REPO}:latest //will also have "latest" tag
-				sh 'docker push ${ECR_REPO}:${IMAGE_TAG}'
-				docker push ${ECR_REPO}:latest
+				sh """
+				    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
+				    docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REPO}:latest
+				    docker push ${ECR_REPO}:${IMAGE_TAG}
+				    docker push ${ECR_REPO}:latest
+				"""
 				
 				// deploy to production EC2 using SSH credential
         		withCredentials([sshUserPrivateKey(credentialsId: 'prod-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
@@ -83,6 +85,7 @@ pipeline {
 }
 
         
+
 
 
 
