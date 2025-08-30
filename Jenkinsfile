@@ -25,14 +25,6 @@ pipeline {
             }
         }
 
-		stage('Debug Git') {
-		    steps {
-		        sh 'pwd'
-		        sh 'ls -la'
-		        sh 'git rev-parse --is-inside-work-tree || echo "Not in a git dir"'
-		    }
-		}
-		
         stage('CI: build | test (PR) | push to ecr'){
             when {changeRequest()} // only for PR builds
 			// docker in docker image + mounts host Docker socket so container for jenkins
@@ -48,9 +40,9 @@ pipeline {
 				// build and run test stage
 		        sh 'docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test .'
 		        sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
-				// build production image and push to ECR
-		        sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
-		        sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}'
+				// build production image
+				sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
+				sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}'
 		        sh 'docker push ${ECR_REPO}:${IMAGE_TAG}'
 		      }
         }
@@ -107,6 +99,7 @@ pipeline {
 }
 
         
+
 
 
 
