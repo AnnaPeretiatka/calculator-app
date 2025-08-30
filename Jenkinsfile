@@ -1,13 +1,13 @@
 pipeline {
     agent any
     environment{
-        IMAGE_NAME = "calculator-app"
+        IMAGE_NAME = "annacalc"
         AWS_ACCOUNT_ID = '992382545251'
         REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com"
         ECR_REPO = "${REGISTRY}/${IMAGE_NAME}"
         AWS_REGION = 'us-east-1'
         IMAGE_TAG = 'latest' // for CD --> overridden for PR
-        EC2_PUBLIC_IP = '184.73.135.135' 
+        EC2_PUBLIC_IP = '107.23.11.231' 
 
     }
     //CI stages
@@ -85,3 +85,4 @@ pipeline {
 }
 
         
+
