@@ -12,14 +12,7 @@ pipeline {
     }
     stages{
         stage('Checkout'){
-			agent any
-            steps{
-                checkout scm //clone repo to Jenkins workspace
-				script {
-					// save short commit hash (like: d4e5f6a) in env for tagging later
-					env.SHORT_COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-				}
-            }
+			echo "Code already checked out by Jenkins"
         }
 
 		stage('Debug Git') {
@@ -102,6 +95,7 @@ pipeline {
 }
 
         
+
 
 
 
