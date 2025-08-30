@@ -31,7 +31,7 @@ pipeline {
         }
 
         stage('CI: Build, Test, Push (PR)') {
-            when { changeRequest() }
+            //when { changeRequest() }
             agent {
                 docker {
                     image 'docker:24-dind'
@@ -108,6 +108,7 @@ pipeline {
         }
     }
 }
+
 
 
 
