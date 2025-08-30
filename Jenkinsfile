@@ -1,26 +1,26 @@
 pipeline {
     agent any
-	options {
+    options {
         skipDefaultCheckout(true)
     }
-    environment{
+    environment {
         IMAGE_NAME = "annacalc"
         AWS_ACCOUNT_ID = '992382545251'
-		AWS_REGION = 'us-east-1'
+        AWS_REGION = 'us-east-1'
         REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         ECR_REPO = "${REGISTRY}/${IMAGE_NAME}"
-        IMAGE_TAG = 'latest' // default fallback, it PR and main staged overwrite it
-		PROD_IP = '54.160.224.36' //EC2 of the app
-
+        IMAGE_TAG = 'latest' // default fallback, overwritten for PR/main
+        PROD_IP = '54.160.224.36'
     }
-    stages{
-		stage('Cleanup') {
-		    steps {
-		        deleteDir()  // this wipes the workspace
-		    }
-		}
-        stage('Checkout'){
-			steps {
+    stages {
+        stage('Cleanup') {
+            steps {
+                deleteDir()
+            }
+        }
+
+        stage('Checkout') {
+            steps {
                 checkout([$class: 'GitSCM',
                           branches: [[name: 'main']],
                           userRemoteConfigs: [[
@@ -30,74 +30,72 @@ pipeline {
             }
         }
 
-        stage('CI: build | test (PR) | push to ecr'){
-            when {changeRequest()} // only for PR builds
-			// docker in docker image + mounts host Docker socket so container for jenkins
-			agent {
-		        docker {
-		            image 'docker:24-dind'
-		            args '-v /var/run/docker.sock:/var/run/docker.sock'
-					reuseNode true
-		        }
-		    }
+        stage('CI: Build, Test, Push (PR)') {
+            when { changeRequest() }
+            agent {
+                docker {
+                    image 'docker:24-dind'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                    reuseNode true
+                }
+            }
             steps {
-				script { env.IMAGE_TAG = "pr-${env.CHANGE_ID}-${env.BUILD_NUMBER}" } // PR-specific tag
-				// build and run test stage
-		        sh 'docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test .'
-		        sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
-				// build production image
-				sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
-				 // Install AWS CLI inside DinD container and push
-				sh '''
-                    apk add --no-cache python3 py3-pip
-                    pip3 install awscli
-                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
-                    docker push ${ECR_REPO}:${IMAGE_TAG}
-                '''
-		      }
+                script { env.IMAGE_TAG = "pr-${env.CHANGE_ID}-${env.BUILD_NUMBER}" }
+                // Build test image
+                sh 'docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test .'
+                sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
+                
+                // Build prod image inside DinD
+                sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
+            }
         }
 
         stage('CD: Build, Test, Push, Deploy (main)') {
-            when {branch 'main'}
-			agent {
-		        docker {
-		            image 'docker:24-dind'
-		            args '-v /var/run/docker.sock:/var/run/docker.sock'
-					reuseNode true
-		        }
-		    }
+            when { branch 'main' }
+            agent {
+                docker {
+                    image 'docker:24-dind'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                    reuseNode true
+                }
+            }
             steps {
-				script { env.IMAGE_TAG = "candidate-${env.SHORT_COMMIT ?: env.BUILD_NUMBER}" } // candidate tag
-				// Build & test inside DinD
+                script { env.IMAGE_TAG = "candidate-${env.SHORT_COMMIT ?: env.BUILD_NUMBER}" }
+                
+                // Build & test
                 sh 'docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test .'
-		        sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
-				
-				// build prod image inside DinD
-				sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
-				
-				// execute login and push outside DinD container
-				sh """
-					apk add --no-cache python3 py3-pip
-					pip3 install awscli
-					aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
-					docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REPO}:latest
-					docker push ${ECR_REPO}:${IMAGE_TAG}
-					docker push ${ECR_REPO}:latest
-				"""
-		        
-				
-				// deploy to production EC2 using SSH credential
-        		withCredentials([sshUserPrivateKey(credentialsId: 'prod-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
-          			sh """
-			 		ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@${PROD_IP} \
-                        'docker pull ${ECR_REPO}:latest && \
-                         docker rm -f ${IMAGE_NAME} || true && \
-                         docker run -d --name ${IMAGE_NAME} -p 5000:5000 --restart=always ${ECR_REPO}:latest'
-			 		"""
-				}
+                sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
 
-				//health check with retry loop
-				script {
+                // Build prod image inside DinD
+                sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
+            }
+        }
+
+        stage('Push to ECR & Deploy') {
+            when { branch 'main' }
+            steps {
+                // Push happens outside DinD
+                script {
+                    sh """
+                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
+                        docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REPO}:latest
+                        docker push ${ECR_REPO}:${IMAGE_TAG}
+                        docker push ${ECR_REPO}:latest
+                    """
+                }
+
+                // Deploy to production EC2 using SSH
+                withCredentials([sshUserPrivateKey(credentialsId: 'prod-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                    sh """
+                        ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@${PROD_IP} \\
+                        'docker pull ${ECR_REPO}:latest && \\
+                         docker rm -f ${IMAGE_NAME} || true && \\
+                         docker run -d --name ${IMAGE_NAME} -p 5000:5000 --restart=always ${ECR_REPO}:latest'
+                    """
+                }
+
+                // Health check
+                script {
                     def ok = false
                     for (int i=0; i<6; i++) {
                         sleep 5
@@ -105,29 +103,8 @@ pipeline {
                         if (rc == '') { ok = true; break }
                     }
                     if (!ok) { error "Health check failed!" }
-				}
+                }
             }
         }
     }
 }
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
