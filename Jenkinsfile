@@ -13,9 +13,15 @@ pipeline {
         PROD_IP = '107.23.11.231'
     }
     stages {
-        stage('Cleanup') {
+        stage('Cleanup and init') {
             steps {
                 deleteDir()
+		script { 
+		    env.SHORT_COMMIT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+		    env.IMAGE_TAG = "commit-${env.SHORT_COMMIT}"
+		    echo "SHORT_COMMIT = ${env.SHORT_COMMIT}"
+		    echo "IMAGE_TAG = ${env.IMAGE_TAG}"
+		}
             }
         }
 
@@ -40,12 +46,14 @@ pipeline {
                 }
             }
             steps {
-                script { env.IMAGE_TAG = "pr-${env.CHANGE_ID}-${env.BUILD_NUMBER}" 
-		echo "env.CHANGE_ID = ${env.CHANGE_ID}"
-		echo "env.BUILD_NUMBER = ${env.BUILD_NUMBER}"
-		echo "CI stage IMAGE_TAG = ${env.IMAGE_TAG}"
+                script { 
+		    env.IMAGE_TAG = "pr-${env.CHANGE_ID}-${env.BUILD_NUMBER}" 
+		    echo "env.CHANGE_ID = ${env.CHANGE_ID}"
+		    echo "env.BUILD_NUMBER = ${env.BUILD_NUMBER}"
+		    echo "CI stage IMAGE_TAG = ${env.IMAGE_TAG}"
 		}
                 // Build test image
+		sh """echo 'Building test image: ${IMAGE_NAME}:${env.IMAGE_TAG}-test'"""
                 sh """docker build --target test -t ${IMAGE_NAME}:${env.IMAGE_TAG}-test ."""
                 sh """docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${env.IMAGE_TAG}-test"""
                 // Build prod image inside DinD
@@ -60,6 +68,7 @@ pipeline {
             steps {
                 script {
 		    sh """
+			echo "Pushing image to ECR: ${ECR_REPO}:${env.IMAGE_TAG}"
 		        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
 			docker push ${ECR_REPO}:${env.IMAGE_TAG}
 		    """
