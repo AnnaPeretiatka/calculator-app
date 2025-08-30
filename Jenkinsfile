@@ -12,7 +12,9 @@ pipeline {
     }
     stages{
         stage('Checkout'){
-			echo "Code already checked out by Jenkins"
+			steps { 
+				echo "Code already checked out by Jenkins"
+			}
         }
 
 		stage('Debug Git') {
@@ -95,6 +97,7 @@ pipeline {
 }
 
         
+
 
 
 
