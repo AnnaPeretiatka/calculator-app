@@ -10,7 +10,7 @@ pipeline {
         REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         ECR_REPO = "${REGISTRY}/${IMAGE_NAME}"
         IMAGE_TAG = 'latest' // default fallback, overwritten for PR/main
-        PROD_IP = '54.160.224.36'
+        PROD_IP = '107.23.11.231'
     }
     stages {
         stage('Cleanup') {
@@ -108,4 +108,5 @@ pipeline {
         }
     }
 }
+
 
