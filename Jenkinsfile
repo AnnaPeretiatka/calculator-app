@@ -47,7 +47,7 @@ pipeline {
             agent {
                 docker {
                     image 'docker:24-dind'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -e IMAGE_TAG=${env.IMAGE_TAG}'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
                     reuseNode true
                 }
             }
@@ -87,7 +87,7 @@ pipeline {
             agent {
                 docker {
                     image 'docker:24-dind'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -e IMAGE_TAG=${env.IMAGE_TAG}'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
                     reuseNode true
                 }
             }
