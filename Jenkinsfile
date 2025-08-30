@@ -43,14 +43,14 @@ pipeline {
                 script { env.IMAGE_TAG = "pr-${env.CHANGE_ID}-${env.BUILD_NUMBER}" 
 		echo "env.CHANGE_ID = ${env.CHANGE_ID}"
 		echo "env.BUILD_NUMBER = ${env.BUILD_NUMBER}"
-		echo "CI stage IMAGE_TAG = ${IMAGE_TAG}"
+		echo "CI stage IMAGE_TAG = ${env.IMAGE_TAG}"
 		}
                 // Build test image
-                sh """docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test ."""
-                sh """docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test"""
+                sh """docker build --target test -t ${IMAGE_NAME}:${env.IMAGE_TAG}-test ."""
+                sh """docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${env.IMAGE_TAG}-test"""
                 // Build prod image inside DinD
-                sh """docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} ."""
-		echo "Built PR image: ${ECR_REPO}:${IMAGE_TAG}"
+                sh """docker build --target prod -t ${ECR_REPO}:${env.IMAGE_TAG} ."""
+		echo "Built PR image: ${ECR_REPO}:${env.IMAGE_TAG}"
             }
         }
 
@@ -61,7 +61,7 @@ pipeline {
                 script {
 		    sh """
 		        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
-			docker push ${ECR_REPO}:${IMAGE_TAG}
+			docker push ${ECR_REPO}:${env.IMAGE_TAG}
 		    """
 		}
             }
@@ -80,10 +80,10 @@ pipeline {
                 script { env.IMAGE_TAG = "candidate-${env.SHORT_COMMIT ?: env.BUILD_NUMBER}" }
                 
                 // Build & test
-                sh """docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test ."""
-                sh """docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test"""
+                sh """docker build --target test -t ${IMAGE_NAME}:${env.IMAGE_TAG}-test ."""
+                sh """docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${env.IMAGE_TAG}-test"""
                 // Build prod image inside DinD
-                sh """docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} ."""
+                sh """docker build --target prod -t ${ECR_REPO}:${env.IMAGE_TAG} ."""
             }
         }
 
@@ -94,8 +94,8 @@ pipeline {
                     // Login to ECR and push images
                     sh """
                         aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
-                        docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REPO}:latest
-                        docker push ${ECR_REPO}:${IMAGE_TAG}
+                        docker tag ${ECR_REPO}:${env.IMAGE_TAG} ${ECR_REPO}:latest
+                        docker push ${ECR_REPO}:${env.IMAGE_TAG}
                         docker push ${ECR_REPO}:latest
                     """
                 }
