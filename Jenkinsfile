@@ -46,10 +46,10 @@ pipeline {
 		echo "CI stage IMAGE_TAG = ${IMAGE_TAG}"
 		}
                 // Build test image
-                sh 'docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test .'
-                sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
+                sh """docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test ."""
+                sh """docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test"""
                 // Build prod image inside DinD
-                sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
+                sh """docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} ."""
 		echo "Built PR image: ${ECR_REPO}:${IMAGE_TAG}"
             }
         }
@@ -80,10 +80,10 @@ pipeline {
                 script { env.IMAGE_TAG = "candidate-${env.SHORT_COMMIT ?: env.BUILD_NUMBER}" }
                 
                 // Build & test
-                sh 'docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test .'
-                sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
+                sh """docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test ."""
+                sh """docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test"""
                 // Build prod image inside DinD
-                sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
+                sh """docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} ."""
             }
         }
 
