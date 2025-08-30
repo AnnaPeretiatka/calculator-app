@@ -1,5 +1,8 @@
 pipeline {
     agent any
+	options {
+        skipDefaultCheckout(true)
+    }
     environment{
         IMAGE_NAME = "annacalc"
         AWS_ACCOUNT_ID = '992382545251'
@@ -12,9 +15,14 @@ pipeline {
     }
     stages{
         stage('Checkout'){
-			steps { 
-				echo "Code already checked out by Jenkins"
-			}
+			steps {
+                checkout([$class: 'GitSCM',
+                          branches: [[name: 'main']],
+                          userRemoteConfigs: [[
+                              url: 'https://github.com/AnnaPeretiatka/calculator-app.git',
+                              credentialsId: 'github-pat'
+                          ]]])
+            }
         }
 
 		stage('Debug Git') {
@@ -99,6 +107,7 @@ pipeline {
 }
 
         
+
 
 
 
