@@ -85,7 +85,7 @@ pipeline {
                 }
 
                 // Deploy to production EC2 using SSH
-                withCredentials([sshUserPrivateKey(credentialsId: 'prod-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'app-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                     sh """
                         ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@${PROD_IP} \\
                         'docker pull ${ECR_REPO}:latest && \\
@@ -108,3 +108,4 @@ pipeline {
         }
     }
 }
+
