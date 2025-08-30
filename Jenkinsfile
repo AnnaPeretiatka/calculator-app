@@ -13,17 +13,13 @@ pipeline {
         PROD_IP = '107.23.11.231'
     }
     stages {
-        stage('Cleanup and init') {
+        stage('Cleanup') {
             steps {
                 deleteDir()
-		script { 
-		    env.SHORT_COMMIT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-		    env.IMAGE_TAG = "commit-${env.SHORT_COMMIT}"
-		    echo "SHORT_COMMIT = ${env.SHORT_COMMIT}"
-		    echo "IMAGE_TAG = ${env.IMAGE_TAG}"
 		}
             }
         }
+
 
         stage('Checkout') {
             steps {
@@ -33,6 +29,18 @@ pipeline {
                               url: 'https://github.com/AnnaPeretiatka/calculator-app.git',
                               credentialsId: 'github-pat'
                           ]]])
+            }
+        }
+
+    stages {
+        stage('Init') {
+            steps {
+		script { 
+		    env.SHORT_COMMIT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+		    env.IMAGE_TAG = "commit-${env.SHORT_COMMIT}"
+		    echo "SHORT_COMMIT = ${env.SHORT_COMMIT}"
+		    echo "IMAGE_TAG = ${env.IMAGE_TAG}"
+		}
             }
         }
 
