@@ -74,8 +74,8 @@ pipeline {
         stage('Push to ECR & Deploy') {
             when { branch 'main' }
             steps {
-                // Push happens outside DinD
                 script {
+                    // Login to ECR and push images
                     sh """
                         aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
                         docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REPO}:latest
@@ -85,15 +85,15 @@ pipeline {
                 }
 
                 // Deploy to production EC2 using SSH
-                withCredentials([sshUserPrivateKey(credentialsId: 'app-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                // Deploy using sshagent instead of -i
+                sshagent(['app-ssh-key']) {
                     sh """
-                        ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${SSH_USER}@${PROD_IP} \\
+                        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${PROD_IP} \\
                         'docker pull ${ECR_REPO}:latest && \\
                          docker rm -f ${IMAGE_NAME} || true && \\
                          docker run -d --name ${IMAGE_NAME} -p 5000:5000 --restart=always ${ECR_REPO}:latest'
                     """
                 }
-
                 // Health check
                 script {
                     def ok = false
@@ -108,5 +108,6 @@ pipeline {
         }
     }
 }
+
 
 
