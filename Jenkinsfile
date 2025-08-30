@@ -79,12 +79,14 @@ pipeline {
                         if (rc == '') { ok = true; break }
                     }
                     if (!ok) { error "Health check failed!" }
+				}
             }
         }
     }
 }
 
         
+
 
 
 
