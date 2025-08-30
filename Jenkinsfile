@@ -24,10 +24,13 @@ pipeline {
 		
         stage('CI: build | test (PR) | push to ecr'){
             when {changeRequest()} // only for PR builds
-			agent { 
-				// docker in docker image + mounts host Docker socket so container for jenkins
-				docker { image 'docker:24-dind' args '-v /var/run/docker.sock:/var/run/docker.sock' }
-			}
+			// docker in docker image + mounts host Docker socket so container for jenkins
+			agent {
+		        docker {
+		            image 'docker:24-dind'
+		            args '-v /var/run/docker.sock:/var/run/docker.sock'
+		        }
+		    }
             steps {
 				script { env.IMAGE_TAG = "pr-${env.CHANGE_ID}-${env.BUILD_NUMBER}" } // PR-specific tag
 				// build and run test stage
@@ -42,7 +45,12 @@ pipeline {
 
         stage('CD: Build, Test, Push, Deploy (main)') {
             when {branch 'main'}
-			agent { docker { image 'docker:24-dind' args '-v /var/run/docker.sock:/var/run/docker.sock' } }
+			agent {
+		        docker {
+		            image 'docker:24-dind'
+		            args '-v /var/run/docker.sock:/var/run/docker.sock'
+		        }
+		    }
             steps {
 				script { env.IMAGE_TAG = "candidate-${env.SHORT_COMMIT}" } // candidate tag
 				// build & run test
@@ -86,6 +94,7 @@ pipeline {
 }
 
         
+
 
 
 
