@@ -86,9 +86,9 @@ pipeline {
 
                 // Deploy to production EC2 using SSH
                 // Deploy using sshagent instead of -i
-                sshagent(['app-ssh-key']) {
+                script {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${PROD_IP} \\
+                        ssh -i ~/.ssh/anna_key_home.pem -o StrictHostKeyChecking=no ubuntu@${PROD_IP} \\
                         'docker pull ${ECR_REPO}:latest && \\
                          docker rm -f ${IMAGE_NAME} || true && \\
                          docker run -d --name ${IMAGE_NAME} -p 5000:5000 --restart=always ${ECR_REPO}:latest'
@@ -108,6 +108,7 @@ pipeline {
         }
     }
 }
+
 
 
 
