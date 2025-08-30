@@ -40,12 +40,17 @@ pipeline {
                 }
             }
             steps {
-                script { env.IMAGE_TAG = "pr-${env.CHANGE_ID}-${env.BUILD_NUMBER}" }
+                script { env.IMAGE_TAG = "pr-${env.CHANGE_ID}-${env.BUILD_NUMBER}" 
+		echo "env.CHANGE_ID = ${env.CHANGE_ID}"
+		echo "env.BUILD_NUMBER = ${env.BUILD_NUMBER}"
+		echo "CI stage IMAGE_TAG = ${IMAGE_TAG}"
+		}
                 // Build test image
                 sh 'docker build --target test -t ${IMAGE_NAME}:${IMAGE_TAG}-test .'
                 sh 'docker run --rm -e PYTHONPATH=/app ${IMAGE_NAME}:${IMAGE_TAG}-test'
                 // Build prod image inside DinD
                 sh 'docker build --target prod -t ${ECR_REPO}:${IMAGE_TAG} .'
+		echo "Built PR image: ${ECR_REPO}:${IMAGE_TAG}"
             }
         }
 
