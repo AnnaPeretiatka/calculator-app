@@ -3,14 +3,14 @@ pipeline {
     environment{
         IMAGE_NAME = "annacalc"
         AWS_ACCOUNT_ID = '992382545251'
-        REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com"
+		AWS_REGION = 'us-east-1'
+        REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         ECR_REPO = "${REGISTRY}/${IMAGE_NAME}"
-        AWS_REGION = 'us-east-1'
         IMAGE_TAG = 'latest' // for CD --> overridden for PR
-        EC2_PUBLIC_IP = '107.23.11.231' 
+        //EC2_PUBLIC_IP = '107.23.11.231'
+		PROD_EC2 = ''
 
     }
-    //CI stages
     stages{
         stage('Checkout'){
             steps{
@@ -85,4 +85,5 @@ pipeline {
 }
 
         
+
 
